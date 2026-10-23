@@ -128,13 +128,14 @@ export default async function AdminDashboardPage() {
             <Award className="w-4 h-4 text-emerald-600" />
             Match Workplaces (PPA)
           </Link>
-          <a
+          <Link
             href="/api/reports/allocations"
+            prefetch={false}
             className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold"
           >
             <Download className="w-3.5 h-3.5" />
             Download Excel/CSV
-          </a>
+          </Link>
         </div>
       </div>
 

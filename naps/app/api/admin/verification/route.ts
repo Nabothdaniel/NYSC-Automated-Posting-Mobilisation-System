@@ -4,12 +4,11 @@ import { db, docsOf, nowIso } from "@/lib/firebase/admin";
 import { requireApiRole } from "@/lib/firebase/session";
 import { writeAudit } from "@/lib/services/audit";
 import { notifyUser } from "@/lib/services/notify";
-import {
-  FLAG_LABEL,
-  type Batch,
-  type CorpsMember,
-  type NimcRecord,
-  type SenateRecord,
+import type {
+  Batch,
+  CorpsMember,
+  NimcRecord,
+  SenateRecord,
 } from "@/lib/types";
 import { runVerificationChecks } from "@/lib/verification/checks";
 

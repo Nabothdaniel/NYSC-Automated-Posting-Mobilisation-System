@@ -150,13 +150,13 @@ export interface FullSeedBundle {
 
 export function buildSeedBundle(): FullSeedBundle {
   const rand = mulberry32(20260601);
-  const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(rand() * arr.length)]!;
 
   // 1. Users
   const users: Record<string, AppUser> = {};
   const userPasswords: Record<string, string> = {};
   for (const u of DEMO_USERS) {
-    const { password, subtitle: _s, ...appUser } = u;
+    const { password, subtitle, ...appUser } = u;
+    void subtitle;
     users[u.uid] = appUser;
     userPasswords[u.email.toLowerCase()] = password;
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, FileCheck2, ShieldCheck, UploadCloud } from "lucide-react";
+import { FileCheck2, ShieldCheck, UploadCloud } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";

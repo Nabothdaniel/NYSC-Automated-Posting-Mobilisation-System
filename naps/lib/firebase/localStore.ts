@@ -16,7 +16,6 @@ interface LocalDbState {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var __napsLocalDb: LocalDbState | undefined;
 }
 
@@ -410,7 +409,8 @@ export class LocalAdminAuth {
     return signLocalToken({ ...decoded, exp: Date.now() + _options.expiresIn });
   }
 
-  async verifySessionCookie(sessionCookie: string, _checkRevoked?: boolean) {
+  async verifySessionCookie(sessionCookie: string, checkRevoked?: boolean) {
+    void checkRevoked;
     const decoded = verifyLocalToken(sessionCookie);
     if (!decoded) throw new Error("Invalid session cookie");
     const uid = String(decoded.uid);
@@ -427,7 +427,8 @@ export class LocalAdminAuth {
     };
   }
 
-  async revokeRefreshTokens(_uid: string) {
+  async revokeRefreshTokens(uid: string) {
+    void uid;
     // no-op in local mode
   }
 }

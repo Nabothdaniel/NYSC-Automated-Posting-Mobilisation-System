@@ -26,7 +26,7 @@ export function SenateUploadClient({
   const [fullName, setFullName] = useState("Danjuma Musa");
   const [dob, setDob] = useState("2002-05-14");
   const [course, setCourse] = useState("Computer Science");
-  const [classOfDegree, setClassOfDegree] = useState("Second Class Upper");
+  const [classOfDegree] = useState("Second Class Upper");
   const [nin, setNin] = useState("99000000999");
   const [loading, setLoading] = useState(false);
 

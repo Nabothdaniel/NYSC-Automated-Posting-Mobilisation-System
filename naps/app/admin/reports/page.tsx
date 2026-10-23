@@ -1,4 +1,5 @@
 import { BarChart3, CheckCircle2, Download, Scale } from "lucide-react";
+import Link from "next/link";
 import { CATEGORY_LABEL, COURSE_CATEGORIES } from "@/lib/constants/courses";
 import { STATE_BY_CODE, ZONE_NAMES, type Zone } from "@/lib/constants/states";
 import { db, docsOf } from "@/lib/firebase/admin";
@@ -57,27 +58,30 @@ export default async function AdminReportsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <a
+          <Link
             href="/api/reports/allocations"
+            prefetch={false}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold"
           >
             <Download className="w-3.5 h-3.5" />
             Export Allocations CSV
-          </a>
-          <a
+          </Link>
+          <Link
             href="/api/reports/states"
+            prefetch={false}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold"
           >
             <Download className="w-3.5 h-3.5" />
             States &amp; Camps CSV
-          </a>
-          <a
+          </Link>
+          <Link
             href="/api/reports/audit"
+            prefetch={false}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold"
           >
             <Download className="w-3.5 h-3.5" />
             Audit Ledger CSV
-          </a>
+          </Link>
         </div>
       </div>
 
