@@ -5,6 +5,7 @@
 >
 > **Target stack (changed from the document):** Next.js (App Router, TypeScript) + Firebase (Auth, Firestore, Storage). Chapter 3 names PHP/Laravel or Django with MySQL/PostgreSQL. Section 9 shows how each part of that design maps to the new stack.
 
+
 ---
 
 ## PART A — UNDERSTANDING THE PROJECT
@@ -20,6 +21,7 @@ The NYSC (National Youth Service Corps, set up in 1973) sends every Nigerian gra
 | 3 | **No security awareness**: kidnappings in Zamfara/Delta, a murder in Kaduna | Security Risk Module; Critical states excluded unless the member opts in |
 | 4 | **Career mismatch**: postings unrelated to the course, non-existent PPAs | Skills-based PPA matching; employers register real vacancies |
 | 5 | **Fragmented data**: late senate lists, slow verification of foreign-trained graduates | Institution portal for uploading senate lists plus automatic cross-checking |
+
 | 6 | **Camp overcrowding** | Capacity is a criterion and a hard limit in the allocation |
 
 ### 3. Objectives → system features (Section 1.3)
@@ -155,6 +157,7 @@ stateDiagram-v2
 - **Dev:** Firebase Emulator Suite, `tsx` for seed scripts
 
 ### 11. Firestore data model (from the ERD in Section 3.3.3)
+
 ```
 users/{uid}
   role: 'corps_member'|'admin'|'institution'|'employer'|'security'|'auditor'
@@ -327,7 +330,7 @@ naps/
 ## 19. Decisions
 | # | Topic | Decision |
 |---|-------|----------|
-| 1 | State-of-origin 15% weight | ⏳ *Pending: Option A recommended, see Section 20* |
+| 1 | State-of-origin 15% weight | ⏳ *Pending: see Section 20* |
 | 2 | Email / SMS | ✅ **Brevo** transactional email API (free tier: 300 emails/day). SMS sent through Brevo SMS if credits exist, otherwise logged (mock) |
 | 3 | 2FA | ✅ **Built for admin (and auditor) accounts**: app-based TOTP (Google Authenticator / Authy) with `otplib` + `qrcode`. Implemented server-side so it works on the **Spark plan** (Firebase's own MFA needs an Identity Platform upgrade). The session cookie is only issued after the TOTP code is checked. Includes 8 one-time backup codes, stored hashed |
 | 4 | Multilingual | English first, `next-intl` wired up (other languages are a stretch goal) |
@@ -337,81 +340,3 @@ naps/
 **Extra packages from these decisions:** `@getbrevo/brevo` (or a plain `fetch` to the Brevo REST API), `otplib`, `qrcode`, `bcryptjs` (backup codes), `leaflet`, `react-leaflet`, `public/geo/nigeria-states.geojson`.
 
 **2FA flow (admin):** email/password → server checks the ID token → if `role ∈ {admin, auditor}` and 2FA is enabled, store a short-lived `pending_2fa` cookie → `/2fa` page → `POST /api/auth/2fa/verify` → full session cookie. First login forces enrolment at `/2fa/setup` (QR code + confirm code). The `mfaVerified` flag is checked in `middleware.ts` for every `/admin/*` route.
-
----
-
-## 20. Decision #1 explained: the state-of-origin 15% weight
-
-### 20.1 What the document says
-Section 3.3.3 lists five weighted criteria. One of them is *"State of Origin Exclusion (Weight: 15%): …automatically excluding corps members' states of origin from allocation, **with no manual override capability**."*
-
-### 20.2 Why that is a problem
-"Exclude the home state" is a **yes/no rule (a hard constraint)**, not something a state can score more or less on. The engine removes the home state **before** scoring, so every state left over scores exactly the same on this criterion (it is "not your home state").
-
-In TOPSIS, a criterion where every option has the same value gives **identical ideal and anti-ideal values**. It therefore adds **0** to both distances (D⁺ and D⁻) and **cannot change the ranking**. The real weights then become:
-
-| Criterion | Weight on paper | **Real effect** (÷ 0.85) |
-|-----------|-----------|---------------------------|
-| Security | 30% | **35.3%** |
-| Course alignment | 25% | **29.4%** |
-| Preference | 20% | **23.5%** |
-| State of origin | 15% | **0% (does nothing)** |
-| Capacity | 10% | **11.8%** |
-
-An examiner who knows MCDM may ask: *"Why give a weight to a criterion that cannot change the decision?"* The design needs a defensible answer.
-
-### 20.3 The options
-| Option | What it means | Pros | Cons |
-|--------|---------------|------|------|
-| **A. National Integration score (recommended)** | Keep home-state exclusion as a **hard filter**. Rename the 15% criterion **"National Integration"** and score how culturally different the destination is from the member's origin, using Nigeria's **6 geopolitical zones** | The weight now changes outcomes. It serves the NYSC's **first statutory objective** (national unity, Decree 51 of 1993). Simple, explainable, easy to defend | Small change to the Chapter 3 wording |
-| B. Share the weight out | Drop the criterion and split the 15% across the other four (35/29/24/12) | Mathematically honest | Weights no longer match the AHP story, and the national unity angle is lost |
-| C. Leave it as written | Keep 15% with a constant score | No document change | Mathematically meaningless, easy for an examiner to attack |
-
-### 20.4 How Option A works
-**Zones:** North Central (NC), North East (NE), North West (NW), South East (SE), South South (SS), South West (SW).
-
-**Scoring (graded version, recommended):**
-| Relationship between origin zone and destination zone | Score |
-|-----------------------------------------|-------|
-| Same zone (e.g. Kano → Kaduna, both NW) | **0.33** |
-| Neighbouring zone, same North/South region (e.g. NW → NC, SE → SS) | **0.66** |
-| Opposite region North ↔ South (e.g. NW → SW, SE → NE) | **1.00** |
-
-*Simpler alternative:* same zone = 0.5, different zone = 1.0.
-
-> [!NOTE]
-> **Why distance in km is not used:** a "send them as far as possible" rule clashes with the document's own concern about **road accidents on the way to camp** (Ebonyi, Jan 2025). Zone-based cultural difference rewards integration without rewarding long risky journeys. Security still has the highest weight (30%), so a far-away *unsafe* state never wins just for being far away.
-
-### 20.5 Worked example
-A corps member from **Kano (NW)** studied **Medicine**. Preferences: 1 Lagos, 2 Kaduna, 3 Oyo, 4 Enugu. No consent for Critical-risk states.
-
-**Step 1: hard filters.** Kano removed (home state). Zamfara, Borno, Yobe and other Critical states removed (no consent). States with full camps removed.
-
-**Step 2: score the candidates** (weighted sum shown for readability; the engine uses TOPSIS, which ranks the same way here):
-
-| State | Zone | Security (30) | Course (25) | Pref (20) | Integration (15) | Capacity (10) | **Total** |
-|-------|------|---------------|-------------|-----------|------------------|---------------|-----------|
-| Lagos | SW | 1.00 | 0.90 | 1.00 | **1.00** | 0.40 | **0.915** |
-| Oyo | SW | 1.00 | 0.60 | 0.50 | **1.00** | 0.70 | **0.770** |
-| Enugu | SE | 0.66 | 0.80 | 0.25 | **1.00** | 0.60 | **0.658** |
-| Kaduna | NW | 0.33 | 0.70 | 0.75 | **0.33** | 0.80 | **0.554** |
-| Katsina | NW | 0.33 | 0.85 | 0.00 | **0.33** | 0.90 | **0.451** |
-| Niger | NC | 0.66 | 0.85 | 0.00 | **0.66** | 0.90 | **0.600** |
-
-→ **Lagos chosen.** The decision record shows each criterion's contribution, which the member sees on the "Why this state?" page.
-
-**Where Integration makes the difference:** it acts as a fair tie-breaker when states are close on everything else. Example: two **equally safe** states with the same medical demand and capacity, say Jigawa (NW) and Kwara (NC), for this Kano graduate. Integration adds 0.15×0.33 = **0.050** to Jigawa and 0.15×0.66 = **0.099** to Kwara, so **Kwara wins**. Without the criterion they would tie and the result would depend on the random queue order. Across 2,000+ members this produces a clearly **more mixed national distribution**. The reports page shows it as a zone-mixing matrix (origin zone × posted zone).
-
-### 20.6 New evaluation metric this enables
-**National Integration Index** = % of corps members posted outside their origin zone. Reported per batch. The baseline is a random allocation, which can be compared against NAPS in Chapter 4.
-
-### 20.7 Suggested wording for Chapter 3 (replaces the bullet in the document)
-> *State of Origin Exclusion (Hard Constraint):* In compliance with the NYSC Act, a corps member's state of origin is removed from the candidate set before scoring and cannot be overridden by any user.
->
-> *National Integration Score (Weight: 15%):* To advance the scheme's national unity objective, candidate states are scored by their cultural distance from the corps member's origin using Nigeria's six geopolitical zones: same zone (0.33), neighbouring zone within the same region (0.66), and across the North–South divide (1.00).
-
-### 20.8 Code impact
-- `lib/constants/states.ts` → each state has `zone`. `ZONE_REGION = { NC:'N', NE:'N', NW:'N', SE:'S', SS:'S', SW:'S' }`
-- `lib/algorithms/allocation.ts` → `integrationScore(originZone, destZone)`
-- `config/allocation.weights.integration = 0.15` (AHP criterion renamed)
-- Reports: zone-mixing heat-map + National Integration Index
